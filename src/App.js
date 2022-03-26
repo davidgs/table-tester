@@ -7,6 +7,7 @@ import { useTable, useSortBy, useRowSelect, useResizeColumns } from "react-table
 // import Form from 'react-bootstrap/Form';
 import { Form, FormLabel, Col, Row, Button, Dropdown } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.css'
+import Chooser from './Chooser'
 
 const Styles = styled.div`
   padding: 1rem;
@@ -25,6 +26,10 @@ const Styles = styled.div`
         max-width: 20px;
       }
     }
+    tbody tr:nth-child(odd){
+  background-color: #9493B0;
+  color: #fff;
+}
 
     th,
     td {
@@ -250,7 +255,7 @@ function Table({ columns, data, updateMyData, skipPageReset }) {
 }
 
 function SelForm({ choices }) {
-  const [myChoices] = React.useState(choices);
+  const [myChoices, buttVal] = React.useState(choices);
   return (
     <div>
     <Form>
@@ -260,21 +265,15 @@ function SelForm({ choices }) {
             onSelect={(eventKey) => {
               const g = eventKey === 'orgs' ? 'block' : 'none';
               this.setState({
-                orgs: g,
+                buttVal: eventKey,
               });
             }}
           >
             <Dropdown.Toggle variant="success" id="dropdown-basic">
-              Select Data Source
+              {buttVal}
             </Dropdown.Toggle>
                 <Dropdown.Menu>
                 {myChoices.map((v, i) => <Dropdown.Item eventKey={v.id}>{v.value}</Dropdown.Item>)}
-              <Dropdown.Item key="Drivers" eventKey="Drivers">
-                Drivers
-              </Dropdown.Item>
-              <Dropdown.Item key="Attendees" eventKey="Attendees">
-                Attendees
-              </Dropdown.Item>
             </Dropdown.Menu>
           </Dropdown>
         </Row>
@@ -377,7 +376,7 @@ function App() {
   return (
     <div className="App">
       <h1>Blind Ministry Data Entry</h1>
-      <SelForm choices={menuItems} />
+      <Chooser choices={menuItems} />
       <Styles>
         <Table
           columns={columns}
