@@ -7,7 +7,7 @@ export default class Chooser extends React.Component {
     super(props)
     this.props = props
     this.state = {
-      buttonName: "Choose One",
+      dataType: props.dataType,
       myChoices: props.choices,
     }
   }
@@ -26,15 +26,15 @@ export default class Chooser extends React.Component {
               <Dropdown
                 onSelect={(eventKey) => {
                   this.setState({
-                    buttonName: eventKey,
+                    dataType: eventKey,
                   });
                 }}
               >
                 <Dropdown.Toggle variant="success" id="dropdown-basic">
-                  {this.state.buttonName}
+                  {this.state.dataType}
                 </Dropdown.Toggle>
                 <Dropdown.Menu>
-                  {this.state.myChoices.map((v, i) => <Dropdown.Item id={v.id} eventKey={v.value}>{v.value}</Dropdown.Item>)}
+                  {this.state.myChoices.map((v, i) => <Dropdown.Item key={v.id} id={v.id} eventKey={v.value}>{v.value}</Dropdown.Item>)}
                 </Dropdown.Menu>
               </Dropdown>
             </Row>

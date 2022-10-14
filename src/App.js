@@ -8,6 +8,8 @@ import { useTable, useSortBy, useRowSelect, useResizeColumns } from "react-table
 import { Form, FormLabel, Col, Row, Button, Dropdown } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.css'
 import Chooser from './Chooser'
+import axios from 'axios'
+import PhoneInput from "./PhoneInput";
 
 const Styles = styled.div`
   padding: 1rem;
@@ -26,7 +28,11 @@ const Styles = styled.div`
         max-width: 20px;
       }
     }
-    tbody tr:nth-child(odd){
+    tbody tr:nth-child(odd) td{
+  background-color: #9493B0;
+  color: #fff;
+}
+tbody tr:nth-child(odd) td input{
   background-color: #9493B0;
   color: #fff;
 }
@@ -70,61 +76,31 @@ const Styles = styled.div`
   }
 `
 const menuItems = [{ id: 1, value: "Drivers" }, { id: 2, value: "Attendees" }];
-const data = [
-  {
-    "_id": {
-      "$oid": "56e839bf76d7549bd70aabb5"
-    },
-    "Name": "Bob Richter",
-    "Address": "1812 Bodwin Lane",
-    "City": "Apex",
-    "State": "NC",
-    "Zip": "27502",
-    "CellPhone": "919-880-2041 ",
-    "Email": "bjr27519@gmail.com",
-    "Location": {
-      "lat": 35.7165291,
-      "lng": -78.86555570000002
-    },
-    "id": "56e49d7a0f270b735d856577",
-    "HomePhone": "919-880-1877",
-    "Notes": ""
-  },
-  { "_id": { "$oid": "56e839bf76d7549bd70aabb8" }, "Name": "Jacin Suski", "Address": "1556 Salem Village Drive", "City": "Apex", "State": "NC", "Zip": "27502-4727", "CellPhone": "801-834-5660 ", "Email": "", "Location": { "lat": 35.7134761, "lng": -78.8641968 }, "id": "56e49d9c0f270b735d856579", "HomePhone": "919-388-3693 ", "Notes": "" },
-  { "_id": { "$oid": "56e839bf76d7549bd70aabb6" }, "Name": "Loulie Metzger", "Address": "6012 Winthrop Drive", "City": "Raleigh", "State": "NC", "Zip": "27612", "CellPhone": "", "Email": "imandloulleggmail.com", "Location": { "lat": 35.864261, "lng": -78.68772899999999 }, "id": { "$oid": "56e839bf76d7549bd70aabb6" }, "HomePhone": "919-782-3833", "Notes": "three ladies who attend the dinners and I am able to drive them.\nThey are Annette Mallory, Lea Williams and her dog, and Bonnie Kemp.", "Passengers": [{ "lat": 35.8320892, "lng": -78.6685708 }] }
-];
+const dataType = "Select Data Type";
 
 // Create an editable cell renderer
-const EditableCell = ({
-  value: initialValue,
-  row: { index },
-  column: { id },
-  updateMyData, // This is a custom function that we supplied to our table instance
-}) => {
+function EditableCell({
+  value: initialValue, row: { index }, column: { id }, updateMyData, // This is a custom function that we supplied to our table instance
+}) {
   // We need to keep and update the state of the cell normally
-  const [value, setValue] = React.useState(initialValue)
+  const [value, setValue] = React.useState(initialValue);
 
   const onChange = e => {
-    setValue(e.target.value)
-  }
+    setValue(e.target.value);
+  };
 
   // We'll only update the external data when the input is blurred
   const onBlur = () => {
-    updateMyData(index, id, value)
-  }
+    updateMyData(index, id, value);
+  };
 
   // If the initialValue is changed external, sync it up with our state
   React.useEffect(() => {
-    setValue(initialValue)
-  }, [initialValue])
+    setValue(initialValue);
+  }, [initialValue]);
 
-  return <input value={value} onChange={onChange} onBlur={onBlur} size={value.length}/>
+  return <input value={value} onChange={onChange} onBlur={onBlur} size={value.length} />;
 }
-
-// Set our editable cell renderer as the default Cell renderer
-// const defaultColumn = {
-//   Cell: EditableCell,
-// }
 
 const IndeterminateCheckbox = React.forwardRef(
   ({ indeterminate, ...rest }, ref) => {
@@ -163,6 +139,7 @@ function Table({ columns, data, updateMyData, skipPageReset }) {
     prepareRow, // Prepare the row (this function needs to be called for each row before getting the row props)
     selectedFlatRows,
     resetResizing,
+    tableTitle,
     state: { selectedRowIds },
   } = useTable({
     columns,
@@ -254,37 +231,14 @@ function Table({ columns, data, updateMyData, skipPageReset }) {
 
 }
 
-function SelForm({ choices }) {
-  const [myChoices, buttVal] = React.useState(choices);
-  return (
-    <div>
-    <Form>
-      <Form.Group>
-        <Row className="mb-3">
-          <Dropdown
-            onSelect={(eventKey) => {
-              const g = eventKey === 'orgs' ? 'block' : 'none';
-              this.setState({
-                buttVal: eventKey,
-              });
-            }}
-          >
-            <Dropdown.Toggle variant="success" id="dropdown-basic">
-              {buttVal}
-            </Dropdown.Toggle>
-                <Dropdown.Menu>
-                {myChoices.map((v, i) => <Dropdown.Item eventKey={v.id}>{v.value}</Dropdown.Item>)}
-            </Dropdown.Menu>
-          </Dropdown>
-        </Row>
-      </Form.Group>
-      </Form>
-      </div>
-  );
-}
-
 function App() {
-  const menuItems = [{ id: 1, value: "Drivers" }, { id: 2, value: "Attendees" }];
+  const [data, setData] = useState([]);
+  useEffect(() => {
+      (async () => {
+        const result = await axios("http://localhost:3030/api/Drivers");
+        setData(result.data);
+      })();
+    }, [dataType]);
   const columns = useMemo(
     () => [
       {
@@ -322,11 +276,14 @@ function App() {
           },
           {
             Header: "Home Phone",
-            accessor: "HomePhone"
+            accessor: "HomePhone",
+            Cell: ({ cell: { value } }) => <PhoneInput name="home phone" values={value} />
           },
           {
             Header: "Cell Phone",
-            accessor: "CellPhone"
+            accessor: "CellPhone",
+            Cell: ({ cell: { value } }) => <PhoneInput name="cell phone" values={value} />
+
           },
           {
             Header: "Email",
@@ -336,12 +293,16 @@ function App() {
             Header: "Notes",
             accessor: "Notes"
           },
+          {
+            Header: "Save",
+            accessor: "Save_me",
+            Cell: ({ cell: { value } }) => <button>Save</button>
+          },
         ]
       },
     ],
     []
   );
-
 
   const [skipPageReset, setSkipPageReset] = React.useState(false)
   // We need to keep the table from resetting the pageIndex when we
@@ -353,17 +314,17 @@ function App() {
   const updateMyData = (rowIndex, columnId, value) => {
     // We also turn on the flag to not reset the page
     setSkipPageReset(true)
-    // setData(old =>
-    //   old.map((row, index) => {
-    //     if (index === rowIndex) {
-    //       return {
-    //         ...old[rowIndex],
-    //         [columnId]: value,
-    //       }
-    //     }
-    //     return row
-    //   })
-    // )
+    setData(old =>
+      old.map((row, index) => {
+        if (index === rowIndex) {
+          return {
+            ...old[rowIndex],
+            [columnId]: value,
+          }
+        }
+        return row
+      })
+    )
   }
 
   // After data chagnes, we turn the flag back off
@@ -376,15 +337,15 @@ function App() {
   return (
     <div className="App">
       <h1>Blind Ministry Data Entry</h1>
-      <Chooser choices={menuItems} />
+      <Chooser dataType={dataType} choices={menuItems} />
       <Styles>
         <Table
           columns={columns}
           data={data}
           updateMyData={updateMyData}
           skipPageReset={skipPageReset}
-          />
-        </Styles>
+        />
+      </Styles>
     </div>
   );
 }
